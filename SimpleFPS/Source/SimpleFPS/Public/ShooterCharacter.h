@@ -22,12 +22,20 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:	
+public:
+
+	UFUNCTION(BlueprintPure)
+	bool IsDead() const;
+
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
+
+	void Shoot();
 
 private:
 	void MoveForward(float axisValue);
@@ -35,7 +43,7 @@ private:
 	void LookUpRate(float axisValue);
 	void LookRightRate(float axisValue);
 
-	void Shoot();
+	
 
 	UPROPERTY(EditAnywhere, Category = "Movements")
 	float RotationRate = 50.f;
@@ -45,5 +53,11 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = "Weapon")
 	AGun* Gun;
+
+	UPROPERTY(EditDefaultsOnly)
+	float MaxHealth = 100.f;
+
+	UPROPERTY(VisibleAnywhere)
+	float Health;
 
 };

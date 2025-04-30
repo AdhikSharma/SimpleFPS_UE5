@@ -21,7 +21,14 @@ void AShooterCharacter::BeginPlay()
 	GetMesh()->HideBoneByName(TEXT("weapon_r"),EPhysBodyOp::PBO_None);
 	Gun->AttachToComponent(GetMesh(),FAttachmentTransformRules::KeepRelativeTransform,TEXT("WeaponSocket"));
 	Gun->SetOwner(this);
+
+	Health = MaxHealth;
 	
+}
+
+bool AShooterCharacter::IsDead() const
+{
+	return Health <= 0;
 }
 
 // Called every frame
@@ -82,5 +89,17 @@ void AShooterCharacter::Shoot()
 	{
 		Gun->PullTrigger();
 	}
+}
+
+
+float AShooterCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	float damageToApply = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	damageToApply = FMath::Min(Health, damageToApply);
+	Health -= damageToApply;
+	UE_LOG(LogTemp, Warning, TEXT("Health Left : %f"),Health);
+
+	return damageToApply;
+
 }
 
