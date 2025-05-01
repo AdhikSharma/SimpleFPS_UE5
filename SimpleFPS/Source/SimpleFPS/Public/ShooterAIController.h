@@ -16,6 +16,7 @@ class SIMPLEFPS_API AShooterAIController : public AAIController
 
 public:
 	virtual void Tick(float deltaTime) override;
+	bool IsDead() const;
 
 protected:
 	virtual void BeginPlay() override;

@@ -4,6 +4,7 @@
 #include "ShooterAIController.h"
 #include "Kismet/GameplayStatics.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "ShooterCharacter.h"
 
 void AShooterAIController::BeginPlay()
 {
@@ -24,20 +25,16 @@ void AShooterAIController::Tick(float deltaTime)
 {
 	Super::Tick(deltaTime);
 	
-	////if line of sight -> move to. setfocus
-	////else clear focus stop movement
-	
-	if (playerPawn == nullptr) return;
+}
 
-	bool sucess = LineOfSightTo(playerPawn);
+bool AShooterAIController::IsDead() const
+{
+	AShooterCharacter* controlledCharacter = Cast<AShooterCharacter>(GetPawn());
 
-	if (sucess) 
+	if (controlledCharacter)
 	{
-		GetBlackboardComponent()->SetValueAsVector(TEXT("PlayerLocation"), playerPawn->GetActorLocation());
-		GetBlackboardComponent()->SetValueAsVector(TEXT("LastKnownPlayerLocation"), playerPawn->GetActorLocation());
-	}else
-	{
-		GetBlackboardComponent()->ClearValue(TEXT("PlayerLocation"));
+		return controlledCharacter->IsDead();
 	}
 
+	return true;
 }
