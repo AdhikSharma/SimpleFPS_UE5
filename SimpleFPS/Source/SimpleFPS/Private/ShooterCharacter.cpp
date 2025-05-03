@@ -1,0 +1,125 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "ShooterCharacter.h"
+#include "Gun.h"
+#include "Components/CapsuleComponent.h"
+#include <SimpleShooterGameModeBase.h>
+
+// Sets default values
+AShooterCharacter::AShooterCharacter()
+{
+ 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	PrimaryActorTick.bCanEverTick = true;
+
+}
+
+// Called when the game starts or when spawned
+void AShooterCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+
+	Gun = GetWorld()->SpawnActor<AGun>(GunClass);
+	GetMesh()->HideBoneByName(TEXT("weapon_r"),EPhysBodyOp::PBO_None);
+	Gun->AttachToComponent(GetMesh(),FAttachmentTransformRules::KeepRelativeTransform,TEXT("WeaponSocket"));
+	Gun->SetOwner(this);
+
+	Health = MaxHealth;
+	
+}
+
+bool AShooterCharacter::IsDead() const
+{
+	return Health <= 0;
+}
+
+float AShooterCharacter::GetHealthPercent() const
+{
+	return Health / MaxHealth;
+}
+
+// Called every frame
+void AShooterCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+}
+
+// Called to bind functionality to input
+void AShooterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+
+	//MOvement
+	PlayerInputComponent->BindAxis(TEXT("MoveForward"), this, &AShooterCharacter::MoveForward);
+	PlayerInputComponent->BindAxis(TEXT("MoveRight"), this, &AShooterCharacter::MoveRight);
+	
+	//Mouse Look
+	PlayerInputComponent->BindAxis(TEXT("LookUp"), this, &APawn::AddControllerPitchInput);
+	PlayerInputComponent->BindAxis(TEXT("LookUpRate"), this, &AShooterCharacter::LookUpRate);
+	
+	//Gamepad Look
+	PlayerInputComponent->BindAxis(TEXT("LookRight"), this, &APawn::AddControllerYawInput);
+	PlayerInputComponent->BindAxis(TEXT("LookRightRate"), this, &AShooterCharacter::LookRightRate);
+	
+	//Jump
+	PlayerInputComponent->BindAction(TEXT("Jump"), IE_Pressed, this, &ACharacter::Jump);
+
+	//Shoot
+	PlayerInputComponent->BindAction(TEXT("Shoot"), IE_Pressed, this, &AShooterCharacter::Shoot);
+
+}
+
+void AShooterCharacter::MoveForward(float axisValue)
+{
+	AddMovementInput(GetActorForwardVector() * axisValue);
+}
+
+void AShooterCharacter::MoveRight(float axisValue)
+{
+	AddMovementInput(GetActorRightVector() * axisValue);
+}
+
+void AShooterCharacter::LookUpRate(float axisValue)
+{
+	AddControllerPitchInput(axisValue * RotationRate * GetWorld()->GetDeltaSeconds());
+}
+
+void AShooterCharacter::LookRightRate(float axisValue)
+{
+	AddControllerYawInput(axisValue * RotationRate * GetWorld()->GetDeltaSeconds());
+}
+
+void AShooterCharacter::Shoot()
+{
+	if (Gun) 
+	{
+		Gun->PullTrigger();
+	}
+}
+
+
+float AShooterCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	float damageToApply = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	damageToApply = FMath::Min(Health, damageToApply);
+	Health -= damageToApply;
+	UE_LOG(LogTemp, Warning, TEXT("Health Left : %f"),Health);
+
+	if (IsDead() && GetController()) 
+	{
+		ASimpleShooterGameModeBase* gameMode = GetWorld()->GetAuthGameMode<ASimpleShooterGameModeBase>();
+		if (gameMode)
+		{
+			gameMode->PawnKilled(this);
+		}
+
+		DetachFromControllerPendingDestroy();
+		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	}
+
+	return damageToApply;
+
+}
+
